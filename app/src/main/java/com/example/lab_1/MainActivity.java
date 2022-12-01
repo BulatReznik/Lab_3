@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.SparseBooleanArray;
 import android.widget.ArrayAdapter;
@@ -21,28 +22,30 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity
 {
-    private static Context context;
     private ArrayAdapter<Component> adapter;
     private EditText textInputLayout;
     private List<Component> components;
-    Button buttonAdd;
-    Button buttonChoose;
-    Button buttonReset;
-    Button buttonDisplay;
-    Button buttonDeleteSelected;
-    Button buttonChange;
-    Button buttonSearch;
-    Button buttonSettings;
-    ListView componentList;
-    private boolean isSelected;
+    private Button buttonAdd;
+    private Button buttonChoose;
+    private Button buttonReset;
+    private Button buttonDisplay;
+    private Button buttonDeleteSelected;
+    private Button buttonChange;
+    private Button buttonSearch;
+    private Button buttonSettings;
+    private ListView componentList;
     private long id = 0;
+    private DB db;
+    private boolean typeStorage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        MainActivity.context = getApplicationContext();
+        Bundle arguments = getIntent().getExtras();
+        typeStorage = (Boolean) arguments.get("typeStorage");
+
         buttonAdd = findViewById(R.id.buttonAdd);
         buttonChoose = findViewById(R.id.buttonChoose);
         buttonReset= findViewById(R.id.buttonReset);
@@ -51,10 +54,20 @@ public class MainActivity extends AppCompatActivity
         buttonChange = findViewById(R.id.buttonChange);
         buttonSearch = findViewById(R.id.buttonActivity);
         buttonSettings = findViewById(R.id.buttonSettings);
-
         textInputLayout = findViewById(R.id.componentInput);
         componentList = findViewById(R.id.componentsListView);
-        components = JSONHelper.importFromJSON(this);
+
+        if (typeStorage==true)
+        {
+            db = new DB(this);
+            db.open();
+            components = db.getComponents();
+        }
+        else
+        {
+            components = JSONHelper.importFromJSON(this);
+        }
+
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice, components);
         componentList.setAdapter(adapter);
 
@@ -89,7 +102,15 @@ public class MainActivity extends AppCompatActivity
                 Component newComponent = new Component(id, enteredData, false);
                 components.add(newComponent);
                 adapter.notifyDataSetChanged();
-                JSONHelper.exportToJSON(this, components);
+
+                if(typeStorage==true)
+                {
+                    db.addComponent(newComponent);
+                }
+                else
+                {
+                    JSONHelper.exportToJSON(this, components);
+                }
             }
         });
 
@@ -99,12 +120,18 @@ public class MainActivity extends AppCompatActivity
             {
                 for(int i = 0; i < components.size(); i++)
                 {
-                    isSelected = true;
                     componentList.setItemChecked(i, true);
                     Component component = components.get(i);
                     component.setSelected(true);
                     adapter.notifyDataSetChanged();
-                    JSONHelper.exportToJSON(this, components);
+                    if (typeStorage==true)
+                    {
+                        db.updateComponent(component);
+                    }
+                    else
+                    {
+                        JSONHelper.exportToJSON(this, components);
+                    }
                 }
             }
             else
@@ -121,7 +148,7 @@ public class MainActivity extends AppCompatActivity
                 Component component = components.get(i);
                 component.setSelected(false);
                 adapter.notifyDataSetChanged();
-                JSONHelper.exportToJSON(this, components);
+                //JSONHelper.exportToJSON(this, components);
             }
 
         });
@@ -147,16 +174,24 @@ public class MainActivity extends AppCompatActivity
 
         buttonDeleteSelected.setOnClickListener(view ->
         {
-            for(int i = components.size() - 1; i >= 0; i--)
+            for(int i = componentList.getCount() -1; i >= 0; i--)
             {
                 if(components.get(i).isSelected() == true)
                 {
+                    if (typeStorage==true)
+                    {
+                        db.deleteComponent(components.get(i).getId());
+                    }
                     components.remove(i);
                     componentList.setItemChecked(i,false);
+
                 }
             }
             adapter.notifyDataSetChanged();
-            JSONHelper.exportToJSON(this, components);
+            if(typeStorage==false)
+            {
+                JSONHelper.exportToJSON(this, components);
+            }
         });
 
         buttonChange.setOnClickListener(view ->
@@ -184,7 +219,10 @@ public class MainActivity extends AppCompatActivity
                 componentList.setAdapter(adapter);
             }
             adapter.notifyDataSetChanged();
-            JSONHelper.exportToJSON(this, components);
+            if(typeStorage==false)
+            {
+                JSONHelper.exportToJSON(this, components);
+            }
         });
 
         componentList.setOnItemLongClickListener((parent, view, position, id) ->
@@ -193,13 +231,22 @@ public class MainActivity extends AppCompatActivity
                     setIcon(android.R.drawable.ic_menu_delete).
                     setTitle("Вы уверены?").
                     setMessage("Вы хотитие удалить элемент").
-                    setPositiveButton("Да", (dialogInterface, which) -> {
+                    setPositiveButton("Да", (dialogInterface, which) ->
+                    {
                         components.remove(position);
+                        if(typeStorage==true)
+                        {
+                            db.deleteComponent(components.get(position).getId());
+                        }
                         adapter.notifyDataSetChanged();
                     })
                     .setNegativeButton("Нет", null)
                     .show();
-            JSONHelper.exportToJSON(this, components);
+
+            if(typeStorage==false)
+            {
+                JSONHelper.exportToJSON(this, components);
+            }
             return true;
         });
 
@@ -209,49 +256,84 @@ public class MainActivity extends AppCompatActivity
             if (component.isSelected() == false)
             {
                 component.setSelected(true);
+                if(typeStorage==true)
+                {
+                    db.updateComponent(component);
+                }
             }
             else
             {
                 component.setSelected(false);
+                if(typeStorage==true)
+                {
+                    db.updateComponent(component);
+                }
             }
-            JSONHelper.exportToJSON(this, components);
+            if(typeStorage==false)
+            {
+                JSONHelper.exportToJSON(this, components);
+            }
             adapter.notifyDataSetChanged();
         });
 
         buttonSearch.setOnClickListener(view ->
         {
             Intent changeActivity = new Intent(MainActivity.this, ComplexSearch.class);
-            startActivity(changeActivity);
-        });
-
-
-        buttonSettings.setOnClickListener(v ->
-        {
-            Intent changeActivity = new Intent(MainActivity.this, Settings.class);
+            changeActivity.putExtra("typeStorage", typeStorage);
             startActivity(changeActivity);
         });
     }
-    public static Context getAppContext() {
-        return MainActivity.context;
-    }
-    /*
     @Override
-    protected void onStop()
-    {
-        super.onStop();
-        JSONHelper.exportToJSON(this, components);
+    protected void onPause(){
+        super.onPause();
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
     }
 
     @Override
     protected void onDestroy()
     {
         super.onDestroy();
-        JSONHelper.exportToJSON(this, components);
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
     }
 
     @Override
-    protected void onPause(){
-        super.onPause();
-        JSONHelper.exportToJSON(this, components);
-    }*/
+    public void onStop() {
+
+        super.onStop();
+
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
+    }
 }

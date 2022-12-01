@@ -3,7 +3,6 @@ package com.example.lab_1;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
@@ -21,18 +20,32 @@ public class ComplexSearch extends AppCompatActivity {
     private ArrayAdapter<Component> adapter;
     private ListView componentList;
     private Button buttonBack;
+    private DB db;
+    private boolean typeStorage;
 
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+
         super.onCreate(savedInstanceState);
-        Context MainActivity = com.example.lab_1.MainActivity.getAppContext();
         setContentView(R.layout.activity_complex_search);
         buttonBack = findViewById(R.id.buttonBack);
         componentList = findViewById(R.id.secondList);
         searchView = findViewById(R.id.searchComponent);
-        components = JSONHelper.importFromJSON(this);
+        Bundle arguments = getIntent().getExtras();
+        typeStorage = (Boolean) arguments.get("typeStorage");
+        if(typeStorage==true)
+        {
+            db = new DB(this);
+            db.open();
+            components = db.getComponents();
+        }
+        else
+        {
+            components = JSONHelper.importFromJSON(this);
+        }
+
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice, components);
         componentList.setAdapter(adapter);
 
@@ -46,36 +59,23 @@ public class ComplexSearch extends AppCompatActivity {
         componentList.setOnItemClickListener((parent, view, position, id) ->
         {
             Component component = components.get(position);
-            if (component.isSelected() == false)
+            if(component.isSelected() == false)
             {
                 component.setSelected(true);
-                componentList.setItemChecked(position,true);
             }
             else
             {
                 component.setSelected(false);
-                componentList.setItemChecked(position,false);
             }
-
-            JSONHelper.exportToJSON (MainActivity, components);
+            if(typeStorage)
+                db.updateComponent(component);
+            if(typeStorage==false)
+            {
+                JSONHelper.exportToJSON (this, components);
+            }
             adapter.notifyDataSetChanged();
         });
 
-        componentList.setOnItemClickListener ((parent, view, position, id) ->
-        {
-            Component component = components.get (position);
-            if (component.isSelected() == false)
-            {
-                component.setSelected (true);
-            }
-            else
-            {
-                component.setSelected (false);
-            }
-
-            JSONHelper.exportToJSON (MainActivity, components);
-            adapter.notifyDataSetChanged();
-        });
 
         searchView.setOnQueryTextListener (new SearchView.OnQueryTextListener()
         {
@@ -100,24 +100,58 @@ public class ComplexSearch extends AppCompatActivity {
         });
 
     }
-
-    /*
-    @Override
-    protected void onStop() {
-        super.onStop();
-        JSONHelper.exportToJSON(this, components);
-    }
-
-    @Override
-    protected void onDestroy(){
-        super.onDestroy();
-        JSONHelper.exportToJSON(this, components);
-    }
-
     @Override
     protected void onPause(){
         super.onPause();
-        JSONHelper.exportToJSON(this, components);
-    }*/
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
+    }
+
+    @Override
+    public void onStop() {
+
+        super.onStop();
+
+        if (typeStorage==true)
+        {
+            for (Component component: components)
+            {
+                db.updateComponent(component);
+            }
+            db.close();
+        }
+        else
+        {
+            JSONHelper.exportToJSON(this, components);
+        }
+    }
 
 }

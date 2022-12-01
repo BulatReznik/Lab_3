@@ -1,6 +1,8 @@
 package com.example.lab_1;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
@@ -18,6 +20,7 @@ public class Settings extends AppCompatActivity
     RadioButton radioButtonDB;
     RadioButton radioButtonFile;
     Button buttonSave;
+    MainActivity activity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -54,19 +57,18 @@ public class Settings extends AppCompatActivity
     }
     protected void saveSettings()
     {
-        Editor ed = sPref.edit();
-        if (radioGroup.getCheckedRadioButtonId() != -1)
-        {
             if (radioButtonDB.isChecked())
             {
-                ed.putString("saveMode", "DB");
+                Intent changeActivity = new Intent(Settings.this, MainActivity.class);
+                changeActivity.putExtra("typeStorage", true);
+                startActivity(changeActivity);
             }
             if (radioButtonFile.isChecked())
             {
-                ed.putString("saveMode", "Files");
+                Intent changeActivity = new Intent(Settings.this, MainActivity.class);
+                changeActivity.putExtra("typeStorage", false);
+                startActivity(changeActivity);
             }
-            ed.commit();
-        }
         Toast.makeText(this, "Настройки успешно сохранены", Toast.LENGTH_SHORT).show();
     }
 }

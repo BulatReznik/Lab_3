@@ -1,0 +1,8 @@
+<resources>
+    <string name="choose_component">Choose</string>
+    <string name="reset">Reset</string>
+    <string name="display_values">Display</string>
+    <string name="enter_component">Enter</string>
+    <string name="add">Add</string>
+    <string name="delete_selectedd">Delete</string>
+</resources>

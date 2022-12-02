@@ -96,6 +96,7 @@ public class ComplexSearch extends AppCompatActivity {
         buttonBack.setOnClickListener(view ->
         {
             Intent changeActivity = new Intent(ComplexSearch.this, MainActivity.class);
+            changeActivity.putExtra("typeStorage", typeStorage);
             startActivity(changeActivity);
         });
 
@@ -109,7 +110,7 @@ public class ComplexSearch extends AppCompatActivity {
             {
                 db.updateComponent(component);
             }
-            db.close();
+
         }
         else
         {
@@ -146,7 +147,7 @@ public class ComplexSearch extends AppCompatActivity {
             {
                 db.updateComponent(component);
             }
-            db.close();
+
         }
         else
         {

@@ -283,6 +283,8 @@ public class MainActivity extends AppCompatActivity
             startActivity(changeActivity);
         });
     }
+
+
     @Override
     protected void onPause(){
         super.onPause();
@@ -292,7 +294,7 @@ public class MainActivity extends AppCompatActivity
             {
                 db.updateComponent(component);
             }
-            db.close();
+
         }
         else
         {
@@ -329,7 +331,6 @@ public class MainActivity extends AppCompatActivity
             {
                 db.updateComponent(component);
             }
-            db.close();
         }
         else
         {

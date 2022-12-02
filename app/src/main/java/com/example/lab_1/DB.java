@@ -126,9 +126,9 @@ public class DB
     }
 
     //Получение числа записей
-    public long getCount()
+    public int getCount()
     {
-        return DatabaseUtils.queryNumEntries(mDB, DB_TABLE);
+        return (int)DatabaseUtils.queryNumEntries(mDB, DB_TABLE);
     }
 
     // удалить запись из DB_TABLE
@@ -161,7 +161,6 @@ public class DB
         {
             super(context, name, factory, version);
         }
-
         // создаем и заполняем БД
         @Override
         public void onCreate(SQLiteDatabase db)
@@ -173,7 +172,6 @@ public class DB
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
         {
         }
-
         @Override
         public synchronized void close()
         {

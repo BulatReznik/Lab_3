@@ -3,15 +3,16 @@ package com.example.lab_1;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
-import android.content.Context;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.SparseBooleanArray;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.example.lab_1.Components.Component;
@@ -25,19 +26,10 @@ public class MainActivity extends AppCompatActivity
     private ArrayAdapter<Component> adapter;
     private EditText textInputLayout;
     private List<Component> components;
-    private Button buttonAdd;
-    private Button buttonChoose;
-    private Button buttonReset;
-    private Button buttonDisplay;
-    private Button buttonDeleteSelected;
-    private Button buttonChange;
-    private Button buttonSearch;
-    private Button buttonSettings;
     private ListView componentList;
     private long id = 0;
     private DB db;
     private boolean typeStorage;
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -46,18 +38,18 @@ public class MainActivity extends AppCompatActivity
         Bundle arguments = getIntent().getExtras();
         typeStorage = (Boolean) arguments.get("typeStorage");
 
-        buttonAdd = findViewById(R.id.buttonAdd);
-        buttonChoose = findViewById(R.id.buttonChoose);
-        buttonReset= findViewById(R.id.buttonReset);
-        buttonDisplay = findViewById(R.id.buttonDisplay);
-        buttonDeleteSelected = findViewById(R.id.buttonDeleteSelected);
-        buttonChange = findViewById(R.id.buttonChange);
-        buttonSearch = findViewById(R.id.buttonActivity);
-        buttonSettings = findViewById(R.id.buttonSettings);
+        Button buttonAdd = findViewById(R.id.buttonAdd);
+        Button buttonChoose = findViewById(R.id.buttonChoose);
+        Button buttonReset = findViewById(R.id.buttonReset);
+        Button buttonDisplay = findViewById(R.id.buttonDisplay);
+        Button buttonDeleteSelected = findViewById(R.id.buttonDeleteSelected);
+        Button buttonChange = findViewById(R.id.buttonChange);
+        Button buttonSearch = findViewById(R.id.buttonActivity);
+        Button buttonSettings = findViewById(R.id.buttonSettings);
         textInputLayout = findViewById(R.id.componentInput);
         componentList = findViewById(R.id.componentsListView);
 
-        if (typeStorage==true)
+        if (typeStorage)
         {
             db = new DB(this);
             db.open();
@@ -65,7 +57,7 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            components = JSONHelper.importFromJSON(this);
+            components = JSON.importFromJSON(this);
         }
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice, components);
@@ -73,9 +65,9 @@ public class MainActivity extends AppCompatActivity
 
         for (int i = 0; i < components.size(); i++)
         {
-            if (components.get(i).isSelected() == true)
+            if (components.get(i).isSelected())
             {
-                componentList.setItemChecked(i,true);
+                componentList.setItemChecked (i,true);
             }
         }
 
@@ -88,7 +80,7 @@ public class MainActivity extends AppCompatActivity
             }
             else
             {
-                Long index;
+                long index;
                 ArrayList<Long> list = new ArrayList<>();
                 if(components.size()!=0)
                 {
@@ -103,15 +95,17 @@ public class MainActivity extends AppCompatActivity
                 components.add(newComponent);
                 adapter.notifyDataSetChanged();
 
-                if(typeStorage==true)
+                if(typeStorage)
                 {
-                    db.addComponent(newComponent);
+                    db.addComponent (newComponent);
+                    updateWidget();
                 }
                 else
                 {
-                    JSONHelper.exportToJSON(this, components);
+                    JSON.exportToJSON (this, components);
                 }
             }
+
         });
 
         buttonChoose.setOnClickListener(view ->
@@ -124,13 +118,13 @@ public class MainActivity extends AppCompatActivity
                     Component component = components.get(i);
                     component.setSelected(true);
                     adapter.notifyDataSetChanged();
-                    if (typeStorage==true)
+                    if (typeStorage)
                     {
                         db.updateComponent(component);
                     }
                     else
                     {
-                        JSONHelper.exportToJSON(this, components);
+                        JSON.exportToJSON(this, components);
                     }
                 }
             }
@@ -142,13 +136,12 @@ public class MainActivity extends AppCompatActivity
 
         buttonReset.setOnClickListener(view ->
         {
-            for(int i = 0; i < components.size(); i++)
+            for (int i = 0; i < components.size(); i++)
             {
                 componentList.setItemChecked(i, false);
                 Component component = components.get(i);
                 component.setSelected(false);
                 adapter.notifyDataSetChanged();
-                //JSONHelper.exportToJSON(this, components);
             }
 
         });
@@ -174,13 +167,14 @@ public class MainActivity extends AppCompatActivity
 
         buttonDeleteSelected.setOnClickListener(view ->
         {
-            for(int i = componentList.getCount() -1; i >= 0; i--)
+            for (int i = componentList.getCount() -1; i >= 0; i--)
             {
-                if(components.get(i).isSelected() == true)
+                if (components.get(i).isSelected())
                 {
-                    if (typeStorage==true)
+                    if (typeStorage)
                     {
                         db.deleteComponent(components.get(i).getId());
+                        updateWidget();
                     }
                     components.remove(i);
                     componentList.setItemChecked(i,false);
@@ -188,19 +182,19 @@ public class MainActivity extends AppCompatActivity
                 }
             }
             adapter.notifyDataSetChanged();
-            if(typeStorage==false)
+            if(!typeStorage)
             {
-                JSONHelper.exportToJSON(this, components);
+                JSON.exportToJSON(this, components);
             }
         });
 
         buttonChange.setOnClickListener(view ->
         {
-            Integer count = 0;
-            Integer chosenIndex = 0;
+            int count = 0;
+            int chosenIndex = 0;
             for (int i = components.size() - 1; i >= 0; i--)
             {
-                if(components.get(i).isSelected() == true)
+                if(components.get(i).isSelected())
                 {
                    count++;
                    chosenIndex = i;
@@ -219,9 +213,9 @@ public class MainActivity extends AppCompatActivity
                 componentList.setAdapter(adapter);
             }
             adapter.notifyDataSetChanged();
-            if(typeStorage==false)
+            if(!typeStorage)
             {
-                JSONHelper.exportToJSON(this, components);
+                JSON.exportToJSON(this, components);
             }
         });
 
@@ -234,18 +228,19 @@ public class MainActivity extends AppCompatActivity
                     setPositiveButton("Да", (dialogInterface, which) ->
                     {
                         components.remove(position);
-                        if(typeStorage==true)
+                        if(typeStorage)
                         {
                             db.deleteComponent(components.get(position).getId());
+
                         }
                         adapter.notifyDataSetChanged();
                     })
                     .setNegativeButton("Нет", null)
                     .show();
 
-            if(typeStorage==false)
+            if(!typeStorage)
             {
-                JSONHelper.exportToJSON(this, components);
+                JSON.exportToJSON(this, components);
             }
             return true;
         });
@@ -253,25 +248,14 @@ public class MainActivity extends AppCompatActivity
         componentList.setOnItemClickListener((parent, view, position, id) ->
         {
             Component component = components.get(position);
-            if (component.isSelected() == false)
+            component.setSelected(!component.isSelected());
+            if(typeStorage)
             {
-                component.setSelected(true);
-                if(typeStorage==true)
-                {
-                    db.updateComponent(component);
-                }
+                db.updateComponent(component);
             }
-            else
+            if(!typeStorage)
             {
-                component.setSelected(false);
-                if(typeStorage==true)
-                {
-                    db.updateComponent(component);
-                }
-            }
-            if(typeStorage==false)
-            {
-                JSONHelper.exportToJSON(this, components);
+                JSON.exportToJSON(this, components);
             }
             adapter.notifyDataSetChanged();
         });
@@ -282,13 +266,20 @@ public class MainActivity extends AppCompatActivity
             changeActivity.putExtra("typeStorage", typeStorage);
             startActivity(changeActivity);
         });
+
+        buttonSettings.setOnClickListener(view ->
+        {
+            Intent changeActivity = new Intent(MainActivity.this, Settings.class);
+            startActivity(changeActivity);
+        });
+
     }
 
 
     @Override
     protected void onPause(){
         super.onPause();
-        if (typeStorage==true)
+        if (typeStorage)
         {
             for (Component component: components)
             {
@@ -298,7 +289,7 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
     }
 
@@ -306,7 +297,7 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy()
     {
         super.onDestroy();
-        if (typeStorage==true)
+        if (typeStorage)
         {
             for (Component component: components)
             {
@@ -316,7 +307,7 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
     }
 
@@ -325,7 +316,7 @@ public class MainActivity extends AppCompatActivity
 
         super.onStop();
 
-        if (typeStorage==true)
+        if (typeStorage)
         {
             for (Component component: components)
             {
@@ -334,7 +325,15 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
+    }
+    private void updateWidget()
+    {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+        RemoteViews remoteViews = new RemoteViews(this.getPackageName(), R.layout.new_app_widget);
+        ComponentName thisWidget = new ComponentName(this, CountWidget.class);
+        remoteViews.setTextViewText(R.id.appwidget_text, "Записей в БД:" + db.getCount());
+        appWidgetManager.updateAppWidget(thisWidget, remoteViews);
     }
 }

@@ -126,6 +126,13 @@
                     android:text="@string/Reset" />
 
                 <Button
+                    android:id="@+id/buttonSettings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:icon="@drawable/car_ui_icon_settings" />
+
+                <Button
                     android:id="@+id/buttonDisplay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -133,12 +140,6 @@
                     android:layout_weight="1"
                     android:text="@string/ShowComponents" />
 
-                <Button
-                    android:id="@+id/buttonSettings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Настройки" />
             </LinearLayout>
 
         </LinearLayout>

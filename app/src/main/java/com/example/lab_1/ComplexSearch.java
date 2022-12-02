@@ -43,7 +43,7 @@ public class ComplexSearch extends AppCompatActivity {
         }
         else
         {
-            components = JSONHelper.importFromJSON(this);
+            components = JSON.importFromJSON(this);
         }
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice, components);
@@ -71,7 +71,7 @@ public class ComplexSearch extends AppCompatActivity {
                 db.updateComponent(component);
             if(typeStorage==false)
             {
-                JSONHelper.exportToJSON (this, components);
+                JSON.exportToJSON (this, components);
             }
             adapter.notifyDataSetChanged();
         });
@@ -114,7 +114,7 @@ public class ComplexSearch extends AppCompatActivity {
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
     }
 
@@ -132,7 +132,7 @@ public class ComplexSearch extends AppCompatActivity {
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
     }
 
@@ -151,7 +151,7 @@ public class ComplexSearch extends AppCompatActivity {
         }
         else
         {
-            JSONHelper.exportToJSON(this, components);
+            JSON.exportToJSON(this, components);
         }
     }
 

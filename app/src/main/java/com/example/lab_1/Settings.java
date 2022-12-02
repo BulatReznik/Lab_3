@@ -20,7 +20,6 @@ public class Settings extends AppCompatActivity
     RadioButton radioButtonDB;
     RadioButton radioButtonFile;
     Button buttonSave;
-    MainActivity activity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
